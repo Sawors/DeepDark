@@ -5,6 +5,7 @@ import de.maxhenkel.voicechat.api.events.MicrophonePacketEvent;
 import de.maxhenkel.voicechat.api.opus.OpusDecoder;
 import de.maxhenkel.voicechat.api.opus.OpusEncoder;
 import de.maxhenkel.voicechat.api.packets.MicrophonePacket;
+import io.github.sawors.deepdark.roles.GameRole;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -66,7 +67,7 @@ public class NoiseManager implements Listener {
         if ((event.getSenderConnection().getPlayer().getPlayer() instanceof Player player)) {
             
             GameManager playerManager = GameManager.getLiveGames().stream().filter(m -> m.getPlayerList().containsKey(player.getUniqueId())).findFirst().orElse(null);
-            if(playerManager == null || !playerManager.getPlayerList().get(player.getUniqueId()).equals(GameManager.GameRole.SURVIVOR)){
+            if(playerManager == null || !playerManager.getPlayerList().get(player.getUniqueId()).equals(GameRole.GameRoleType.SURVIVOR)){
                 return;
             }
             
@@ -121,7 +122,7 @@ public class NoiseManager implements Listener {
                 TextColor.color(0x153b48),
                 TextColor.color(0x1f5a54),
                 TextColor.color(0x2e8a8c),
-                TextColor.color(0x51dde9)
+                TextColor.color(0x51DEE8)
         };
         
         if(level < 0){
@@ -149,7 +150,7 @@ public class NoiseManager implements Listener {
                     this.cancel();
                 }
                 
-                if(isCancelled() || !manager.getPlayerList().get(tracked.getUniqueId()).equals(GameManager.GameRole.SURVIVOR)){
+                if(isCancelled() || !manager.getPlayerList().get(tracked.getUniqueId()).equals(GameRole.GameRoleType.SURVIVOR)){
                     return;
                 }
                 

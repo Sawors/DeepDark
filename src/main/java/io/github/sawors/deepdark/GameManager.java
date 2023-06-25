@@ -2,6 +2,7 @@ package io.github.sawors.deepdark;
 
 import de.maxhenkel.voicechat.api.opus.OpusDecoder;
 import de.maxhenkel.voicechat.api.opus.OpusEncoder;
+import io.github.sawors.deepdark.roles.GameRole;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -16,14 +17,16 @@ public class GameManager {
     //
     private static final Set<GameManager> liveGames = new HashSet<>();
     
-    private static final String titleChar = "\uEff1";
+    static final String titleChar = "\uEff1";
 
     //
     // INSTANCE
     //
-    private final Map<UUID, GameRole> playerList;
+    private final Map<UUID, GameRole.GameRoleType> playerList;
     private final UUID gameId;
     private final NoiseManager noiseManager;
+    private GameState gameState;
+    private Map<UUID, GameRole> roleWishlists;
     
     public GameManager(){
         playerList = new HashMap<>();
@@ -33,6 +36,8 @@ public class GameManager {
         }
         gameId = id;
         noiseManager = new NoiseManager(this);
+        gameState = GameState.LOBBY;
+        roleWishlists = new HashMap<>();
         
         // registering the game
         liveGames.add(this);
@@ -83,8 +88,7 @@ public class GameManager {
     
     public void addPlayer(Player player){
         noiseManager.trackPlayer(player);
-        playerList.put(player.getUniqueId(),GameRole.SURVIVOR);
-        player.sendPlayerListHeader(Component.text(" "+titleChar+" ").append(Component.newline()).append(Component.newline()).append(DeepDarkUtils.gradientText("by Sawors",0x153b48,0x51dde9,0x1f5a54,0x1f5a54)).append(Component.newline()));
+        playerList.put(player.getUniqueId(), GameRole.GameRoleType.SURVIVOR);
         player.playerListName(player.displayName().append(Component.text(" - lobby")).color(NamedTextColor.GRAY));
         player.sendPlayerListFooter(Component.text("game : "+gameId.toString().substring(0,gameId.toString().indexOf("-"))).color(NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, TextDecoration.State.TRUE));
     }
@@ -97,18 +101,17 @@ public class GameManager {
         playerList.remove(playerId);
     }
     
-    enum GameRole {
-        SURVIVOR,
-        WARDEN,
-        SPECTATOR,
-        LOBBY
+    enum GameState {
+        LOBBY,
+        STARTED,
+        FINISHED
     }
     
     /**
      *
      * @return An immutable copy of the player list and their roles
      */
-    public Map<UUID, GameRole> getPlayerList() {
+    public Map<UUID, GameRole.GameRoleType> getPlayerList() {
         return Map.copyOf(playerList);
     }
     
