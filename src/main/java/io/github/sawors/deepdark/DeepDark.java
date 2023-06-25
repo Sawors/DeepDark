@@ -96,9 +96,7 @@ public final class DeepDark extends JavaPlugin implements Listener {
     public static void sendPlayerResourcePack(PlayerJoinEvent event){
         Player p = event.getPlayer();
         try(InputStream in = new URL(packHashUrl).openStream(); Scanner reader = new Scanner(in, StandardCharsets.UTF_8)){
-            String hash = reader.next();
-            logAdmin(hash);
-            p.setResourcePack(packUrl,hash);
+            p.setResourcePack(packUrl,reader.next());
         } catch (IOException e){
             e.printStackTrace();
         }
