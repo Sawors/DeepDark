@@ -1,47 +1,54 @@
 package io.github.sawors.deepdark;
 
-import de.maxhenkel.voicechat.api.VoicechatConnection;
 import de.maxhenkel.voicechat.api.VoicechatServerApi;
 import de.maxhenkel.voicechat.api.events.MicrophonePacketEvent;
 import de.maxhenkel.voicechat.api.opus.OpusDecoder;
 import de.maxhenkel.voicechat.api.opus.OpusEncoder;
-import de.maxhenkel.voicechat.api.opus.OpusEncoderMode;
 import de.maxhenkel.voicechat.api.packets.MicrophonePacket;
-import io.papermc.paper.event.entity.WardenAngerChangeEvent;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 
-import static io.github.sawors.deepdark.DeepDark.logAdmin;
-
 public class NoiseManager implements Listener {
     
     private static final double threshold = -45; // the minimum volume from which voice is considered
-    private static final double highVolume = -20; // the minimum volume from which voice is considered
-    private static final double midVolume = -25; // the minimum volume from which voice is considered
-    private static final double lowVolume = -30; // the minimum volume from which voice is considered
+    private static final double highVolume = -20; // tier 3 loudness (in dB relative to 0, lower values mean easier activation)
+    private static final double midVolume = -25; // tier 2 loudness (in dB relative to 0, lower values mean easier activation)
+    private static final double lowVolume = -30; // tier 1 loudness (in dB relative to 0, lower values mean easier activation)
+    private static final int indicatorRefreshRate = 1;
     
-    private static Map<UUID, BukkitTask> voiceIndicators = new HashMap<>();
-    private static Map<UUID, List<Double>> volumeBuffer = new HashMap<>();
+    private final Map<UUID, BukkitTask> voiceIndicators = new HashMap<>();
+    private final Map<UUID, List<Double>> volumeBuffer = new HashMap<>();
     
-    protected static OpusEncoder encoder = null;
-    protected static OpusDecoder decoder = null;
+    protected OpusEncoder encoder = null;
+    protected OpusDecoder decoder = null;
+    
+    private final GameManager manager;
+    
+    public NoiseManager(GameManager manager){
+        this.manager = manager;
+    }
     
     @EventHandler
     public static void onPlayerConnect(PlayerJoinEvent event){
+        
+        GameManager playerManager = GameManager.getLiveGames().stream().filter(m -> m.getPlayerList().containsKey(event.getPlayer().getUniqueId())).findFirst().orElse(null);
+        if(playerManager == null){
+            return;
+        }
+        
+        NoiseManager noiseManager = playerManager.getNoiseManager();
+        
         BukkitTask runner = new BukkitRunnable() {
             
             final Player tracked = event.getPlayer();
@@ -54,7 +61,7 @@ public class NoiseManager implements Listener {
                 }
                 
                 
-                List<Double> buffer = List.copyOf(volumeBuffer.getOrDefault(tracked.getUniqueId(),new ArrayList<>()));
+                List<Double> buffer = List.copyOf(playerManager.getNoiseManager().volumeBuffer.getOrDefault(tracked.getUniqueId(),new ArrayList<>()));
                 
                 double mean = buffer.stream().reduce(Double::sum).orElse(threshold-5)/Math.max(buffer.size(),1);
                 int loudness = mean >= highVolume ? 3 : mean >= midVolume ? 2 : mean >= lowVolume ? 1 : mean >= threshold ? 0 : -1;
@@ -65,16 +72,16 @@ public class NoiseManager implements Listener {
                     sculkTrigger = GameEvent.RESONATE_12;
                 }
                 tracked.sendActionBar(buildIndicator(loudness).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE));
-                volumeBuffer.put(tracked.getUniqueId(),new ArrayList<>());
+                noiseManager.volumeBuffer.put(tracked.getUniqueId(),new ArrayList<>());
                 if(sculkTrigger != null){
                     tracked.getWorld().sendGameEvent(tracked,sculkTrigger,tracked.getLocation().toVector());
                 }
             }
-        }.runTaskTimer(DeepDark.getPlugin(),2,2);
-        voiceIndicators.put(event.getPlayer().getUniqueId(),runner);
+        }.runTaskTimer(DeepDark.getPlugin(),10,indicatorRefreshRate);
+        noiseManager.voiceIndicators.put(event.getPlayer().getUniqueId(),runner);
     }
     
-    public void copySendPacket(MicrophonePacketEvent event){
+    public static void copySendPacket(MicrophonePacketEvent event){
         
         if(Bukkit.getOnlinePlayers().size() < 1){
             return;
@@ -87,6 +94,12 @@ public class NoiseManager implements Listener {
         // Cast the generic player object of the voice chat API to an actual bukkit player
         // This object should always be a bukkit player object on bukkit based servers
         if ((event.getSenderConnection().getPlayer().getPlayer() instanceof Player player)) {
+            
+            GameManager playerManager = GameManager.getLiveGames().stream().filter(m -> m.getPlayerList().containsKey(player.getUniqueId())).findFirst().orElse(null);
+            if(playerManager == null){
+                return;
+            }
+            
             VoicechatServerApi api = event.getVoicechat();
             MicrophonePacket packet = event.getPacket();
             if(decoder == null){
@@ -96,7 +109,7 @@ public class NoiseManager implements Listener {
                 encoder = api.createEncoder();
             }
             short[] samples = decoder.decode(packet.getOpusEncodedData());
-            double rms = 0D; // root mean square (RMS) amplitude
+            double rms = 0.0;
             
             
             for (short value : samples) {

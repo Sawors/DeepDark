@@ -2,8 +2,7 @@ package io.github.sawors.deepdark;
 
 import de.maxhenkel.voicechat.api.BukkitVoicechatService;
 import de.maxhenkel.voicechat.api.VoicechatPlugin;
-import de.maxhenkel.voicechat.api.opus.OpusDecoder;
-import de.maxhenkel.voicechat.api.opus.OpusEncoder;
+import io.github.sawors.deepdark.commands.GameCommand;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -14,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import javax.annotation.Nullable;
 import java.sql.Time;
 import java.time.LocalTime;
+import java.util.Objects;
 import java.util.logging.Level;
 
 public final class DeepDark extends JavaPlugin {
@@ -32,19 +32,16 @@ public final class DeepDark extends JavaPlugin {
             logAdmin("Simple Voice Chat plugin detected, integration enabled");
         }
         
-        getServer().getPluginManager().registerEvents(new NoiseManager(),this);
+        getServer().getPluginManager().registerEvents(new NoiseManager(null),this);
+        Objects.requireNonNull(getServer().getPluginCommand("deepdark")).setExecutor(new GameCommand());
+        
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        OpusDecoder decoder = NoiseManager.decoder;
-        if(decoder != null){
-            decoder.close();
-        }
-        OpusEncoder encoder = NoiseManager.encoder;
-        if(encoder != null){
-            encoder.close();
+        for(GameManager manager : GameManager.getLiveGames()){
+            manager.close();
         }
     }
     

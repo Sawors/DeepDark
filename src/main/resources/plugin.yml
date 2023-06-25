@@ -6,3 +6,7 @@ prefix: DeepDark
 depend: [voicechat]
 authors: [Sawors]
 website: https://github.com/Sawors/DeepDark
+commands:
+  deepdark:
+    aliases: dd
+    description: the main command to interact with the DeepDark plugin
