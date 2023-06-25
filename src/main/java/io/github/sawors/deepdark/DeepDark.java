@@ -9,13 +9,18 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.annotation.Nullable;
 import java.sql.Time;
 import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public final class DeepDark extends JavaPlugin {
@@ -75,5 +80,13 @@ public final class DeepDark extends JavaPlugin {
                 p.sendMessage(Component.text(output));
             }
         }
+    }
+    
+    private static final Set<UUID> toReload = new HashSet<>();
+    @EventHandler
+    public static void sendPlayerResourcePack(PlayerJoinEvent event){
+        Player p = event.getPlayer();
+        UUID pid = p.getUniqueId();
+        p.setResourcePack("","");
     }
 }

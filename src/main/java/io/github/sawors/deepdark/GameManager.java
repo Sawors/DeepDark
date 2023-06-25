@@ -4,7 +4,6 @@ import de.maxhenkel.voicechat.api.opus.OpusDecoder;
 import de.maxhenkel.voicechat.api.opus.OpusEncoder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
 
@@ -85,8 +84,8 @@ public class GameManager {
     public void addPlayer(Player player){
         noiseManager.trackPlayer(player);
         playerList.put(player.getUniqueId(),GameRole.LOBBY);
-        player.sendPlayerListHeader(Component.text(titleChar).append(Component.newline()).append(Component.newline()).append(Component.text("       by Sawors       ").append(Component.newline()).color(TextColor.color(0x2e8a8c))));
-        player.playerListName(Component.text("Lobby - ").append(player.displayName()).color(NamedTextColor.GRAY));
+        player.sendPlayerListHeader(Component.text(" "+titleChar+" ").append(Component.newline()).append(Component.newline()).append(DeepDarkUtils.gradientText("by Sawors",0x153b48,0x51dde9,0x1f5a54,0x1f5a54)).append(Component.newline()));
+        player.playerListName(player.displayName().append(Component.text(" - lobby")).color(NamedTextColor.GRAY));
         player.sendPlayerListFooter(Component.text("game : "+gameId.toString().substring(0,gameId.toString().indexOf("-"))).color(NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, TextDecoration.State.TRUE));
     }
     

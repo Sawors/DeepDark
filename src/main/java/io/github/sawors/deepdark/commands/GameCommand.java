@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class GameCommand implements TabExecutor {
@@ -60,7 +61,12 @@ public class GameCommand implements TabExecutor {
                 
                 }
                 case "test" -> {
-                    sender.sendMessage(DeepDarkUtils.gradientText("Salut ça va ?",0x153b48,0x51dde9));
+                    //TextColor.color(0x10272e),
+                    //                TextColor.color(0x153b48),
+                    //                TextColor.color(0x1f5a54),
+                    //                TextColor.color(0x2e8a8c),
+                    //                TextColor.color(0x51dde9)
+                    sender.sendMessage(DeepDarkUtils.gradientText(args.length >= 2 ? Arrays.stream(Arrays.copyOfRange(args,1,args.length)).reduce((s1,s2) -> s1+" "+s2).orElse(""): "Sawors",0x153b48,0x51dde9,0x1f5a54));
                 }
             }
         }
