@@ -1,5 +1,6 @@
 package io.github.sawors.deepdark.commands;
 
+import io.github.sawors.deepdark.DeepDarkUtils;
 import io.github.sawors.deepdark.GameManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -58,6 +59,9 @@ public class GameCommand implements TabExecutor {
                 case "players" -> {
                 
                 }
+                case "test" -> {
+                    sender.sendMessage(DeepDarkUtils.gradientText("Salut ça va ?",0x153b48,0x51dde9));
+                }
             }
         }
         return false;
@@ -73,7 +77,8 @@ public class GameCommand implements TabExecutor {
                     "list",
                     "players",
                     "close",
-                    "leave"
+                    "leave",
+                    "test"
             );
         }
         return null;
