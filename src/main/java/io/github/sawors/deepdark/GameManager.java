@@ -2,6 +2,7 @@ package io.github.sawors.deepdark;
 
 import de.maxhenkel.voicechat.api.opus.OpusDecoder;
 import de.maxhenkel.voicechat.api.opus.OpusEncoder;
+import org.bukkit.entity.Player;
 
 import java.util.*;
 
@@ -46,10 +47,24 @@ public class GameManager {
         }
     }
     
+    public void addPlayer(Player player){
+        noiseManager.trackPlayer(player);
+        playerList.put(player.getUniqueId(),GameRole.SURVIVOR);
+    }
+    
+    /**
+     *
+     * @param playerId The Bukkit UUID of the player to remove. Using UUIDs allows to remove offline players too
+     */
+    public void removePlayer(UUID playerId){
+        playerList.remove(playerId);
+    }
+    
     enum GameRole {
         SURVIVOR,
         WARDEN,
-        SPECTATOR
+        SPECTATOR,
+        WAITING
     }
     
     /**

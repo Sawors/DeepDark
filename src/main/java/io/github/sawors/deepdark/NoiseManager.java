@@ -47,38 +47,8 @@ public class NoiseManager implements Listener {
             return;
         }
         
-        NoiseManager noiseManager = playerManager.getNoiseManager();
+        playerManager.getNoiseManager().trackPlayer(event.getPlayer());
         
-        BukkitTask runner = new BukkitRunnable() {
-            
-            final Player tracked = event.getPlayer();
-            
-            @Override
-            public void run() {
-                if(!tracked.isOnline()){
-                    this.cancel();
-                    return;
-                }
-                
-                
-                List<Double> buffer = List.copyOf(playerManager.getNoiseManager().volumeBuffer.getOrDefault(tracked.getUniqueId(),new ArrayList<>()));
-                
-                double mean = buffer.stream().reduce(Double::sum).orElse(threshold-5)/Math.max(buffer.size(),1);
-                int loudness = mean >= highVolume ? 3 : mean >= midVolume ? 2 : mean >= lowVolume ? 1 : mean >= threshold ? 0 : -1;
-                GameEvent sculkTrigger = null;
-                if(loudness == 2) {
-                    sculkTrigger = GameEvent.RESONATE_8;
-                } else if(loudness == 3){
-                    sculkTrigger = GameEvent.RESONATE_12;
-                }
-                tracked.sendActionBar(buildIndicator(loudness).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE));
-                noiseManager.volumeBuffer.put(tracked.getUniqueId(),new ArrayList<>());
-                if(sculkTrigger != null){
-                    tracked.getWorld().sendGameEvent(tracked,sculkTrigger,tracked.getLocation().toVector());
-                }
-            }
-        }.runTaskTimer(DeepDark.getPlugin(),10,indicatorRefreshRate);
-        noiseManager.voiceIndicators.put(event.getPlayer().getUniqueId(),runner);
     }
     
     public static void copySendPacket(MicrophonePacketEvent event){
@@ -100,15 +70,16 @@ public class NoiseManager implements Listener {
                 return;
             }
             
+            NoiseManager noiseManager = playerManager.getNoiseManager();
             VoicechatServerApi api = event.getVoicechat();
             MicrophonePacket packet = event.getPacket();
-            if(decoder == null){
-                decoder = api.createDecoder();
+            if(noiseManager.decoder == null){
+                noiseManager.decoder = api.createDecoder();
             }
-            if(encoder == null){
-                encoder = api.createEncoder();
+            if(noiseManager.encoder == null){
+                noiseManager.encoder = api.createEncoder();
             }
-            short[] samples = decoder.decode(packet.getOpusEncodedData());
+            short[] samples = noiseManager.decoder.decode(packet.getOpusEncodedData());
             double rms = 0.0;
             
             
@@ -129,11 +100,11 @@ public class NoiseManager implements Listener {
                 db = -127D;
             }
             if(db > threshold){
-                List<Double> buffer = volumeBuffer.get(player.getUniqueId());
+                List<Double> buffer = noiseManager.volumeBuffer.get(player.getUniqueId());
                 if(buffer == null){
                     buffer = new ArrayList<>();
                     buffer.add(db);
-                    volumeBuffer.put(player.getUniqueId(),buffer);
+                    noiseManager.volumeBuffer.put(player.getUniqueId(),buffer);
                 } else {
                     buffer.add(db);
                 }
@@ -165,5 +136,38 @@ public class NoiseManager implements Listener {
         
         
         return left.color(colors[level+1]).append(core).append(right.color(colors[level+1]));
+    }
+    
+    public void trackPlayer(Player player){
+        BukkitTask runner = new BukkitRunnable() {
+            
+            final Player tracked = player;
+            
+            @Override
+            public void run() {
+                if(!tracked.isOnline() || !manager.getPlayerList().containsKey(player.getUniqueId())){
+                    this.cancel();
+                    return;
+                }
+                
+                
+                List<Double> buffer = List.copyOf(volumeBuffer.getOrDefault(tracked.getUniqueId(),new ArrayList<>()));
+                
+                double mean = buffer.stream().reduce(Double::sum).orElse(threshold-5)/Math.max(buffer.size(),1);
+                int loudness = mean >= highVolume ? 3 : mean >= midVolume ? 2 : mean >= lowVolume ? 1 : mean >= threshold ? 0 : -1;
+                GameEvent sculkTrigger = null;
+                if(loudness == 2) {
+                    sculkTrigger = GameEvent.RESONATE_8;
+                } else if(loudness == 3){
+                    sculkTrigger = GameEvent.RESONATE_12;
+                }
+                tracked.sendActionBar(buildIndicator(loudness).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE));
+                volumeBuffer.put(tracked.getUniqueId(),new ArrayList<>());
+                if(sculkTrigger != null){
+                    tracked.getWorld().sendGameEvent(tracked,sculkTrigger,tracked.getLocation().toVector());
+                }
+            }
+        }.runTaskTimer(DeepDark.getPlugin(),10,indicatorRefreshRate);
+        voiceIndicators.put(player.getUniqueId(),runner);
     }
 }
