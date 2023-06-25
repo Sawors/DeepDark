@@ -120,7 +120,8 @@ public final class DeepDark extends JavaPlugin implements Listener {
     @EventHandler
     public static void reloadPack(PlayerResourcePackStatusEvent event){
         Player p = event.getPlayer();
-        if(toReload.contains(p.getUniqueId()) && event.getStatus().equals(PlayerResourcePackStatusEvent.Status.ACCEPTED)){
+        logAdmin(event.getStatus());
+        if(toReload.contains(p.getUniqueId()) && event.getStatus().equals(PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED)){
             try(InputStream in = new URL(packHashUrl).openStream(); Scanner reader = new Scanner(in, StandardCharsets.UTF_8)){
                 p.setResourcePack(packUrl,reader.next());
             } catch (IOException e){
