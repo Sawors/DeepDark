@@ -49,7 +49,7 @@ public class GameManager {
     
     public void addPlayer(Player player){
         noiseManager.trackPlayer(player);
-        playerList.put(player.getUniqueId(),GameRole.SURVIVOR);
+        playerList.put(player.getUniqueId(),GameRole.LOBBY);
     }
     
     /**
@@ -64,7 +64,7 @@ public class GameManager {
         SURVIVOR,
         WARDEN,
         SPECTATOR,
-        WAITING
+        LOBBY
     }
     
     /**

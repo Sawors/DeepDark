@@ -1,5 +1,7 @@
 package io.github.sawors.deepdark;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import de.maxhenkel.voicechat.api.BukkitVoicechatService;
 import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import io.github.sawors.deepdark.commands.GameCommand;
@@ -20,6 +22,7 @@ public final class DeepDark extends JavaPlugin {
     
     private static Plugin instance;
     private static VoicechatPlugin vcplugin = null;
+    private static ProtocolManager protocolManager = null;
 
     @Override
     public void onEnable() {
@@ -31,6 +34,8 @@ public final class DeepDark extends JavaPlugin {
             vcservice.registerPlugin(vcplugin);
             logAdmin("Simple Voice Chat plugin detected, integration enabled");
         }
+        
+        protocolManager = ProtocolLibrary.getProtocolManager();
         
         getServer().getPluginManager().registerEvents(new NoiseManager(null),this);
         Objects.requireNonNull(getServer().getPluginCommand("deepdark")).setExecutor(new GameCommand());
@@ -47,6 +52,10 @@ public final class DeepDark extends JavaPlugin {
     
     public static Plugin getPlugin(){
         return instance;
+    }
+    
+    public static ProtocolManager getProtocolManager() {
+        return protocolManager;
     }
     
     public static void logAdmin(Object msg) throws IllegalStateException{

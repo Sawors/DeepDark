@@ -39,7 +39,7 @@ public class VoiceChatIntegrationPlugin implements VoicechatPlugin {
     @Override
     public void registerEvents(EventRegistration registration) {
         // TODO register your events
-        registration.registerEvent(MicrophonePacketEvent.class, NoiseManager::copySendPacket);
+        registration.registerEvent(MicrophonePacketEvent.class, NoiseManager::readVolumeIndicator);
         registration.registerEvent(VoicechatServerStartedEvent.class, VoiceChatIntegrationPlugin::onServerStarted);
     }
     

@@ -3,7 +3,7 @@ version: '${project.version}'
 main: io.github.sawors.deepdark.DeepDark
 api-version: '1.20'
 prefix: DeepDark
-depend: [voicechat]
+depend: [voicechat, ProtocolLib]
 authors: [Sawors]
 website: https://github.com/Sawors/DeepDark
 commands:

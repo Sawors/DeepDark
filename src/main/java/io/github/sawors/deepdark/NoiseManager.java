@@ -51,7 +51,7 @@ public class NoiseManager implements Listener {
         
     }
     
-    public static void copySendPacket(MicrophonePacketEvent event){
+    public static void readVolumeIndicator(MicrophonePacketEvent event){
         
         if(Bukkit.getOnlinePlayers().size() < 1){
             return;
@@ -66,7 +66,7 @@ public class NoiseManager implements Listener {
         if ((event.getSenderConnection().getPlayer().getPlayer() instanceof Player player)) {
             
             GameManager playerManager = GameManager.getLiveGames().stream().filter(m -> m.getPlayerList().containsKey(player.getUniqueId())).findFirst().orElse(null);
-            if(playerManager == null){
+            if(playerManager == null || !playerManager.getPlayerList().get(player.getUniqueId()).equals(GameManager.GameRole.SURVIVOR)){
                 return;
             }
             
@@ -147,6 +147,9 @@ public class NoiseManager implements Listener {
             public void run() {
                 if(!tracked.isOnline() || !manager.getPlayerList().containsKey(player.getUniqueId())){
                     this.cancel();
+                }
+                
+                if(isCancelled() || !manager.getPlayerList().get(tracked.getUniqueId()).equals(GameManager.GameRole.SURVIVOR)){
                     return;
                 }
                 
