@@ -3,27 +3,33 @@ package io.github.sawors.deepdark;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import de.maxhenkel.voicechat.api.BukkitVoicechatService;
+import de.maxhenkel.voicechat.api.VoicechatConnection;
 import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import io.github.sawors.deepdark.commands.GameCommand;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.sql.Time;
 import java.time.LocalTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
-public final class DeepDark extends JavaPlugin {
+public final class DeepDark extends JavaPlugin implements Listener {
     
     private static Plugin instance;
     private static VoicechatPlugin vcplugin = null;
@@ -43,6 +49,7 @@ public final class DeepDark extends JavaPlugin {
         protocolManager = ProtocolLibrary.getProtocolManager();
         
         getServer().getPluginManager().registerEvents(new NoiseManager(null),this);
+        getServer().getPluginManager().registerEvents(this,this);
         Objects.requireNonNull(getServer().getPluginCommand("deepdark")).setExecutor(new GameCommand());
         
     }
@@ -83,10 +90,45 @@ public final class DeepDark extends JavaPlugin {
     }
     
     private static final Set<UUID> toReload = new HashSet<>();
+    private static final String packUrl = "https://github.com/Sawors/DeepDark/raw/main/resourcepack/DeepDarkRP.zip";
+    private static final String packHashUrl = "https://raw.githubusercontent.com/Sawors/DeepDark/main/resourcepack/sha1.txt";
     @EventHandler
     public static void sendPlayerResourcePack(PlayerJoinEvent event){
         Player p = event.getPlayer();
-        UUID pid = p.getUniqueId();
-        p.setResourcePack("","");
+        try(InputStream in = new URL(packHashUrl).openStream(); Scanner reader = new Scanner(in, StandardCharsets.UTF_8)){
+            String hash = reader.next();
+            logAdmin(hash);
+            p.setResourcePack(packUrl,hash);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        toReload.add(p.getUniqueId());
+        
+        new BukkitRunnable(){
+            @Override
+            public void run() {
+                VoicechatConnection vcCo = VoiceChatIntegrationPlugin.getVoicechatServerApi().getConnectionOf(p.getUniqueId());
+                if(vcCo != null && !vcCo.isInstalled()){
+                    p.kick(Component.text("Please install the Simple Voice Chat mod in order to play this gamemode !\nhttps://modrinth.com/plugin/simple-voice-chat/versions").color(NamedTextColor.RED));
+                    this.cancel();
+                } else if(vcCo != null && vcCo.isConnected()){
+                    p.sendMessage(Component.text("Voice chat connection established !").color(NamedTextColor.GREEN));
+                    this.cancel();
+                }
+            }
+        }.runTaskTimer(getPlugin(),40,20);
+    }
+    
+    @EventHandler
+    public static void reloadPack(PlayerResourcePackStatusEvent event){
+        Player p = event.getPlayer();
+        if(toReload.contains(p.getUniqueId()) && event.getStatus().equals(PlayerResourcePackStatusEvent.Status.ACCEPTED)){
+            try(InputStream in = new URL(packHashUrl).openStream(); Scanner reader = new Scanner(in, StandardCharsets.UTF_8)){
+                p.setResourcePack(packUrl,reader.next());
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            toReload.remove(p.getUniqueId());
+        }
     }
 }

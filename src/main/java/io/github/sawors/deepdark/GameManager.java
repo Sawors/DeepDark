@@ -83,7 +83,7 @@ public class GameManager {
     
     public void addPlayer(Player player){
         noiseManager.trackPlayer(player);
-        playerList.put(player.getUniqueId(),GameRole.LOBBY);
+        playerList.put(player.getUniqueId(),GameRole.SURVIVOR);
         player.sendPlayerListHeader(Component.text(" "+titleChar+" ").append(Component.newline()).append(Component.newline()).append(DeepDarkUtils.gradientText("by Sawors",0x153b48,0x51dde9,0x1f5a54,0x1f5a54)).append(Component.newline()));
         player.playerListName(player.displayName().append(Component.text(" - lobby")).color(NamedTextColor.GRAY));
         player.sendPlayerListFooter(Component.text("game : "+gameId.toString().substring(0,gameId.toString().indexOf("-"))).color(NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, TextDecoration.State.TRUE));
